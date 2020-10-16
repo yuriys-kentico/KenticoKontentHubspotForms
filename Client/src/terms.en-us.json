@@ -1,0 +1,14 @@
+{
+  "errors": {
+    "genericError": "A generic error has occurred.",
+    "genericStack": "No error information."
+  },
+  "element": {
+    "title": "HubSpot Forms",
+    "chooseForm": "Choose form...",
+    "enabledDescription": "Choose a hubspot form.",
+    "previewExplanation": "This is a preview of what the form might look like:",
+    "reset": "Reset form",
+    "disabledDescription": "This element has no functionality in this context."
+  }
+}

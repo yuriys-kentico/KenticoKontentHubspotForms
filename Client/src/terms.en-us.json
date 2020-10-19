@@ -6,7 +6,7 @@
   "element": {
     "title": "HubSpot Forms",
     "chooseForm": "Choose form...",
-    "enabledDescription": "Choose a hubspot form.",
+    "enabledDescription": "Choose a HubSpot form.",
     "previewExplanation": "This is a preview of what the form might look like:",
     "reset": "Reset form",
     "disabledDescription": "This element has no functionality in this context."

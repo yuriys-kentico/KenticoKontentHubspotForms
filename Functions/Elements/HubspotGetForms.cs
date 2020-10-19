@@ -36,12 +36,18 @@ namespace Functions.Elements
             {
                 var (clientId, redirectUri, code) = getFormsRequest;
 
-                await hubSpotRepository.Authenticate(new AuthenticateParameters
+                var authenticateResult = await hubSpotRepository.Authenticate(new AuthenticateParameters
                 {
                     ClientId = clientId,
                     RedirectUri = redirectUri,
                     Code = code
                 });
+
+                switch (authenticateResult)
+                {
+                    case NotAuthenticatedResult _:
+                        return LogUnauthorized();
+                }
 
                 var forms = await hubSpotRepository.GetForms();
 

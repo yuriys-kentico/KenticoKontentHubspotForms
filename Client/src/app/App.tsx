@@ -1,4 +1,3 @@
-import moment, { Moment } from 'moment';
 import React, { lazy, Suspense } from 'react';
 import { boundary, useError } from 'react-boundary';
 
@@ -15,7 +14,6 @@ export const App = boundary(() => {
   const [error, info] = useError();
 
   const [, setHubSpotCode] = useLocalStorage<string>(LocalStorageKeys.Code);
-  const [, setHubSpotCodeExpiration] = useLocalStorage<Moment | null>(LocalStorageKeys.CodeExpiration);
 
   if (error || info) {
     return <Error stack={`${error && error.stack}${info && info.componentStack}`} />;
@@ -26,7 +24,6 @@ export const App = boundary(() => {
   if (hubspotCode) {
     setHubSpotCode(hubspotCode);
 
-    setHubSpotCodeExpiration(moment().add(5, 'hours'));
     global.close();
 
     return null;

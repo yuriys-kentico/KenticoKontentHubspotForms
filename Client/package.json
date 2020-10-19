@@ -9,7 +9,6 @@
     "@testing-library/react": "^10.4.8",
     "@testing-library/user-event": "^12.1.1",
     "clsx": "^1.1.1",
-    "moment": "^2.27.0",
     "react": "^16.13.1",
     "react-boundary": "^1.0.0",
     "react-dom": "^16.13.1",

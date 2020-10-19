@@ -27,7 +27,7 @@ namespace HubSpot
             this.hubSpotApiCache = hubSpotApiCache;
         }
 
-        public async Task Authenticate(AuthenticateParameters getTokenParameters)
+        public async Task<IAuthenticateResult> Authenticate(AuthenticateParameters getTokenParameters)
         {
             string? accessToken = null;
 
@@ -47,7 +47,7 @@ namespace HubSpot
 
                 if (request.StatusCode == System.Net.HttpStatusCode.BadRequest)
                 {
-                    throw new Exception("Stale access token.");
+                    return new NotAuthenticatedResult();
                 }
 
                 var response = await request.Content.ReadAsAsync<GetTokenResponse>();
@@ -58,6 +58,8 @@ namespace HubSpot
             }
 
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            return new AuthenticatedResult();
         }
 
         public async Task<IEnumerable<dynamic>> GetForms()

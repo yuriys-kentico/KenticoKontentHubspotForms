@@ -34,7 +34,7 @@ namespace Functions
         {
             logger.LogWarning("Unauthorized");
 
-            return new NotFoundResult();
+            return new UnauthorizedResult();
         }
 
         protected IActionResult LogException(Exception exception)

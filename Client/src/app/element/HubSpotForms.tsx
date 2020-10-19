@@ -1,4 +1,4 @@
-import moment, { Moment } from 'moment';
+import clsx from 'clsx';
 import React, { FC, Fragment, useEffect, useRef, useState } from 'react';
 import { useAsyncEffect } from 'use-async-effect';
 import wretch from 'wretch';
@@ -28,10 +28,20 @@ const useStyles = makeStyles(() =>
       border: 'none',
       color: '#4c4d52',
     },
-    form: { display: 'table' },
-    formRow: { display: 'table-row' },
-    label: { display: 'table-cell' },
-    input: { display: 'table-cell' },
+    form: {
+      display: 'flex',
+      flexDirection: 'column',
+      width: 500,
+      border: '1px solid #ddd',
+      padding: 8,
+      borderRadius: 5,
+    },
+    formRow: { display: 'flex', padding: '0 0 4px 0' },
+    label: { flex: 2 },
+    field: { flex: 10 },
+    input: {},
+    checkbox: { width: '10%' },
+    submit: { width: 'auto', margin: '0 auto' },
   })
 );
 
@@ -46,8 +56,7 @@ export const HubSpotForms: FC = () => {
   const [customElementContext, setCustomElementContext] = useState<IContext | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const [hubspotCode] = useLocalStorage<string>(LocalStorageKeys.Code);
-  const [hubSpotCodeExpiration] = useLocalStorage<Moment | null>(LocalStorageKeys.CodeExpiration);
+  const [hubspotCode, setHubspotCode] = useLocalStorage<string | undefined>(LocalStorageKeys.Code);
   const [hubspotForms, setHubSpotForms] = useState<IHubSpotForm[]>();
   const [selectedForm, setSelectedForm] = useState<IHubSpotForm>();
   const [showSelectedForm, setShowSelectedForm] = useState(true);
@@ -59,6 +68,12 @@ export const HubSpotForms: FC = () => {
   useEffect(() => {
     if (!available) {
       const initCustomElement = (element: ICustomElement<IHubSpotFormsConfig>, context: IContext) => {
+        const elementValue = element.value !== null && (JSON.parse(element.value) as IHubSpotForm);
+
+        if (elementValue) {
+          setSelectedForm(elementValue);
+        }
+
         setAvailable(true);
         setElementEnabled(!element.disabled);
         setCustomElementConfig(element.config);
@@ -84,14 +99,7 @@ export const HubSpotForms: FC = () => {
   });
 
   useEffect(() => {
-    const now = moment();
-
-    if (
-      available &&
-      customElementConfig &&
-      customElementContext &&
-      (hubspotCode === undefined || (moment(hubSpotCodeExpiration) || now).diff(now) < 0)
-    ) {
+    if (available && customElementConfig && customElementContext && hubspotCode === undefined) {
       setLoading(true);
 
       try {
@@ -104,20 +112,30 @@ export const HubSpotForms: FC = () => {
         setError(error.message);
       }
     }
-  }, [available, customElementConfig, customElementContext, hubspotCode, hubSpotCodeExpiration]);
+  }, [available, customElementConfig, customElementContext, hubspotCode]);
 
   useAsyncEffect(async () => {
     if (available && customElementConfig && customElementContext && hubspotCode) {
+      let continueRequest = true;
+
       const request = wretch(`${customElementConfig.hubspotFormsEndpoint}`)
         .post({
           clientId: customElementConfig.hubspotClientId,
           redirectUri: redirectUri,
           code: hubspotCode,
         })
+        .unauthorized(() => {
+          continueRequest = false;
+          setHubspotCode(undefined);
+        })
         .json<IHubSpotFormsResponse>();
 
       try {
         const response = await request;
+
+        if (!continueRequest) {
+          return;
+        }
 
         setHubSpotForms(response.forms);
       } catch (error) {
@@ -128,42 +146,63 @@ export const HubSpotForms: FC = () => {
     }
   }, [available, customElementConfig, customElementContext, hubspotCode]);
 
+  useEffect(() => {
+    if (available && enabled) {
+      CustomElement.setValue(JSON.stringify(selectedForm ?? null));
+    }
+  }, [available, enabled, selectedForm]);
+
   return (
     <div>
       {available && (
         <div ref={elementRef}>
           {loading && <Loading />}
           {error && <div>{error}</div>}
-          {error === undefined && enabled && hubspotForms && (
+          {error === undefined && (
             <>
-              <div className={styles.row}>
-                <div className={styles.fullWidthCell}>
-                  <p>{elementTerms.enabledDescription}</p>
-                </div>
-              </div>
-              <div className={styles.row}>
-                <div className={styles.fullWidthCell}>
-                  <select
-                    className={styles.select}
-                    value={selectedForm?.guid}
-                    onChange={(event) => {
-                      if (event.target.value) {
-                        setSelectedForm(hubspotForms.find((form) => form.guid === event.target.value));
-                        setShowSelectedForm(true);
-                      } else {
-                        setSelectedForm(undefined);
-                      }
-                    }}
-                  >
-                    <option value=''>{elementTerms.chooseForm}</option>
-                    {hubspotForms.map((form) => (
-                      <option key={form.guid} value={form.guid}>
-                        {form.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              {enabled && hubspotForms && (
+                <>
+                  <div className={styles.row}>
+                    <div className={styles.fullWidthCell}>
+                      <p>{elementTerms.enabledDescription}</p>
+                    </div>
+                  </div>
+                  <div className={styles.row}>
+                    <div className={styles.fullWidthCell}>
+                      <select
+                        className={styles.select}
+                        value={selectedForm?.guid}
+                        onChange={(event) => {
+                          if (event.target.value) {
+                            setSelectedForm(hubspotForms.find((form) => form.guid === event.target.value));
+                            setShowSelectedForm(true);
+                          } else {
+                            setSelectedForm(undefined);
+                          }
+                        }}
+                      >
+                        <option value=''>{elementTerms.chooseForm}</option>
+                        {hubspotForms.map((form) => (
+                          <option key={form.guid} value={form.guid}>
+                            {form.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {!enabled && (
+                <>
+                  <div className={clsx(styles.row, 'content-item-element__guidelines')}>
+                    <div className={styles.fullWidthCell}>
+                      <p>{elementTerms.disabledDescription}</p>
+                    </div>
+                  </div>
+                </>
+              )}
+
               {selectedForm && (
                 <div className={styles.row}>
                   <div className={styles.fullWidthCell}>
@@ -171,6 +210,7 @@ export const HubSpotForms: FC = () => {
                   </div>
                 </div>
               )}
+
               <div className={styles.row}>
                 <div className={styles.fullWidthCell}>
                   {selectedForm && (
@@ -181,47 +221,86 @@ export const HubSpotForms: FC = () => {
                           {selectedForm.formFieldGroups.map((formFieldGroup, index) => (
                             <Fragment key={index}>
                               {formFieldGroup.fields.map((field, index) => {
+                                let input;
+                                switch (field.fieldType) {
+                                  case 'text':
+                                    input = (
+                                      <input
+                                        className={clsx(styles.input, 'form__text-field')}
+                                        name={field.name}
+                                        type='text'
+                                        placeholder={field.placeholder}
+                                        required={field.required}
+                                        defaultValue={field.defaultValue}
+                                      />
+                                    );
+                                    break;
+
+                                  case 'booleancheckbox':
+                                    input = (
+                                      <input
+                                        className={clsx(styles.input, styles.checkbox, 'form__text-field')}
+                                        name={field.name}
+                                        type='checkbox'
+                                        placeholder={field.placeholder}
+                                        required={field.required}
+                                        defaultValue={field.defaultValue}
+                                      />
+                                    );
+                                    break;
+
+                                  case 'textarea':
+                                    input = (
+                                      <textarea
+                                        className={clsx(styles.input, 'form__text-field')}
+                                        name={field.name}
+                                        placeholder={field.placeholder}
+                                        required={field.required}
+                                        defaultValue={field.defaultValue}
+                                      />
+                                    );
+                                    break;
+                                }
                                 return (
                                   <label key={index} className={styles.formRow}>
-                                    <p className={styles.label}>{field.label}</p>
-                                    <input
-                                      className={styles.input}
-                                      name={field.name}
-                                      type={field.type}
-                                      placeholder={field.placeholder}
-                                      required={field.required}
-                                      defaultValue={field.defaultValue}
-                                    />
-                                    <p>{field.description}</p>
+                                    <p className={styles.label}>
+                                      {field.label}
+                                      {field.required && '*'}
+                                    </p>
+                                    <p className={styles.field}>
+                                      {input}
+                                      {field.description}
+                                    </p>
                                   </label>
                                 );
                               })}
                             </Fragment>
                           ))}
                           <input
+                            className={clsx(styles.submit, 'btn btn--primary btn--xs')}
                             type='submit'
                             value={selectedForm.submitText}
                             onClick={() => setShowSelectedForm(false)}
                           />
                         </>
                       )}
-                      {!showSelectedForm && (
-                        <>
-                          <p>{selectedForm.inlineMessage}</p>
-                          <br />
-                          <button onClick={() => setShowSelectedForm(true)}>{elementTerms.reset}</button>
-                        </>
-                      )}
+                      {!showSelectedForm && <p>{selectedForm.inlineMessage}</p>}
                     </div>
+                  )}
+                  {selectedForm && !showSelectedForm && (
+                    <>
+                      <br />
+                      <button
+                        className={clsx(styles.submit, 'btn btn--primary btn--xs')}
+                        onClick={() => setShowSelectedForm(true)}
+                      >
+                        {elementTerms.reset}
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
             </>
-          )}
-          {error === undefined && !enabled && (
-            <div className='content-item-element__guidelines'>
-              <p>{elementTerms.disabledDescription}</p>
-            </div>
           )}
         </div>
       )}

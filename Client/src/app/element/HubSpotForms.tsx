@@ -158,7 +158,7 @@ export const HubSpotForms: FC = () => {
         <div ref={elementRef}>
           {loading && <Loading />}
           {error && <div>{error}</div>}
-          {error === undefined && (
+          {error === undefined && !loading && (
             <>
               {enabled && hubspotForms && (
                 <>

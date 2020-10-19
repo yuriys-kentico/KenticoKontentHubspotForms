@@ -4,6 +4,8 @@ Sample custom element and Azure Function code that uses the HubSpot API to list 
 
 The code in this repository is configured for Azure Functions, however it can be lifted to any web application running ASP.NET Core 3.1.
 
+![KontentHubSpotForms](https://user-images.githubusercontent.com/34716163/96485877-b0326e00-120a-11eb-972d-9e26579a5736.gif)
+
 ## Setup
 
 1. Deploy the Azure Function code in `Functions.sln` to an Azure Function. See the [Function Settings](#function-settings) section for additional configuration steps.

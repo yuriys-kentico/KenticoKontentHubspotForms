@@ -116,6 +116,8 @@ export const HubSpotForms: FC = () => {
 
   useAsyncEffect(async () => {
     if (available && customElementConfig && customElementContext && hubspotCode) {
+      setLoading(true);
+
       let continueRequest = true;
 
       const request = wretch(`${customElementConfig.hubspotFormsEndpoint}`)

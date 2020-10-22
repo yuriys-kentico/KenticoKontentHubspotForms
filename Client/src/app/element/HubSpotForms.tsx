@@ -63,8 +63,6 @@ export const HubSpotForms: FC = () => {
 
   const [error, setError] = useState<string>();
 
-  const elementRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     if (!available) {
       const initCustomElement = (element: ICustomElement<IHubSpotFormsConfig>, context: IContext) => {
@@ -91,10 +89,8 @@ export const HubSpotForms: FC = () => {
   }, [available]);
 
   useEffect(() => {
-    if (available && elementRef.current) {
-      let totalHeight = elementRef.current.scrollHeight;
-
-      CustomElement.setHeight(totalHeight);
+    if (available) {
+      CustomElement.setHeight(document.documentElement.scrollHeight);
     }
   });
 
@@ -156,155 +152,151 @@ export const HubSpotForms: FC = () => {
 
   return (
     <div>
-      {available && (
-        <div ref={elementRef}>
-          {loading && <Loading />}
-          {error && <div>{error}</div>}
-          {error === undefined && !loading && (
+      {error && <div>{error}</div>}
+      {error === undefined && loading && <Loading />}
+      {error === undefined && !loading && available && (
+        <>
+          {enabled && hubspotForms && (
             <>
-              {enabled && hubspotForms && (
-                <>
-                  <div className={styles.row}>
-                    <div className={styles.fullWidthCell}>
-                      <p>{elementTerms.enabledDescription}</p>
-                    </div>
-                  </div>
-                  <div className={styles.row}>
-                    <div className={styles.fullWidthCell}>
-                      <select
-                        className={styles.select}
-                        value={selectedForm?.guid}
-                        onChange={(event) => {
-                          if (event.target.value) {
-                            setSelectedForm(hubspotForms.find((form) => form.guid === event.target.value));
-                            setShowSelectedForm(true);
-                          } else {
-                            setSelectedForm(undefined);
-                          }
-                        }}
-                      >
-                        <option value=''>{elementTerms.chooseForm}</option>
-                        {hubspotForms.map((form) => (
-                          <option key={form.guid} value={form.guid}>
-                            {form.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {!enabled && (
-                <>
-                  <div className={clsx(styles.row, 'content-item-element__guidelines')}>
-                    <div className={styles.fullWidthCell}>
-                      <p>{elementTerms.disabledDescription}</p>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {selectedForm && (
-                <div className={styles.row}>
-                  <div className={styles.fullWidthCell}>
-                    <p>{elementTerms.previewExplanation}</p>
-                  </div>
-                </div>
-              )}
-
               <div className={styles.row}>
                 <div className={styles.fullWidthCell}>
-                  {selectedForm && (
-                    <div className={styles.form}>
-                      <h4>{selectedForm.name}</h4>
-                      {showSelectedForm && (
-                        <>
-                          {selectedForm.formFieldGroups.map((formFieldGroup, index) => (
-                            <Fragment key={index}>
-                              {formFieldGroup.fields.map((field, index) => {
-                                let input;
-                                switch (field.fieldType) {
-                                  case 'text':
-                                    input = (
-                                      <input
-                                        className={clsx(styles.input, 'form__text-field')}
-                                        name={field.name}
-                                        type='text'
-                                        placeholder={field.placeholder}
-                                        required={field.required}
-                                        defaultValue={field.defaultValue}
-                                      />
-                                    );
-                                    break;
-
-                                  case 'booleancheckbox':
-                                    input = (
-                                      <input
-                                        className={clsx(styles.input, styles.checkbox, 'form__text-field')}
-                                        name={field.name}
-                                        type='checkbox'
-                                        placeholder={field.placeholder}
-                                        required={field.required}
-                                        defaultValue={field.defaultValue}
-                                      />
-                                    );
-                                    break;
-
-                                  case 'textarea':
-                                    input = (
-                                      <textarea
-                                        className={clsx(styles.input, 'form__text-field')}
-                                        name={field.name}
-                                        placeholder={field.placeholder}
-                                        required={field.required}
-                                        defaultValue={field.defaultValue}
-                                      />
-                                    );
-                                    break;
-                                }
-                                return (
-                                  <label key={index} className={styles.formRow}>
-                                    <p className={styles.label}>
-                                      {field.label}
-                                      {field.required && '*'}
-                                    </p>
-                                    <p className={styles.field}>
-                                      {input}
-                                      {field.description}
-                                    </p>
-                                  </label>
-                                );
-                              })}
-                            </Fragment>
-                          ))}
-                          <input
-                            className={clsx(styles.submit, 'btn btn--primary btn--xs')}
-                            type='submit'
-                            value={selectedForm.submitText}
-                            onClick={() => setShowSelectedForm(false)}
-                          />
-                        </>
-                      )}
-                      {!showSelectedForm && <p>{selectedForm.inlineMessage}</p>}
-                    </div>
-                  )}
-                  {selectedForm && !showSelectedForm && (
-                    <>
-                      <br />
-                      <button
-                        className={clsx(styles.submit, 'btn btn--primary btn--xs')}
-                        onClick={() => setShowSelectedForm(true)}
-                      >
-                        {elementTerms.reset}
-                      </button>
-                    </>
-                  )}
+                  <p>{elementTerms.enabledDescription}</p>
+                </div>
+              </div>
+              <div className={styles.row}>
+                <div className={styles.fullWidthCell}>
+                  <select
+                    className={styles.select}
+                    value={selectedForm?.guid}
+                    onChange={(event) => {
+                      if (event.target.value) {
+                        setSelectedForm(hubspotForms.find((form) => form.guid === event.target.value));
+                        setShowSelectedForm(true);
+                      } else {
+                        setSelectedForm(undefined);
+                      }
+                    }}
+                  >
+                    <option value=''>{elementTerms.chooseForm}</option>
+                    {hubspotForms.map((form) => (
+                      <option key={form.guid} value={form.guid}>
+                        {form.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </>
           )}
-        </div>
+
+          {!enabled && (
+            <>
+              <div className={clsx(styles.row, 'content-item-element__guidelines')}>
+                <div className={styles.fullWidthCell}>
+                  <p>{elementTerms.disabledDescription}</p>
+                </div>
+              </div>
+            </>
+          )}
+
+          {selectedForm && (
+            <div className={styles.row}>
+              <div className={styles.fullWidthCell}>
+                <p>{elementTerms.previewExplanation}</p>
+              </div>
+            </div>
+          )}
+
+          <div className={styles.row}>
+            <div className={styles.fullWidthCell}>
+              {selectedForm && (
+                <div className={styles.form}>
+                  <h4>{selectedForm.name}</h4>
+                  {showSelectedForm && (
+                    <>
+                      {selectedForm.formFieldGroups.map((formFieldGroup, index) => (
+                        <Fragment key={index}>
+                          {formFieldGroup.fields.map((field, index) => {
+                            let input;
+                            switch (field.fieldType) {
+                              case 'text':
+                                input = (
+                                  <input
+                                    className={clsx(styles.input, 'form__text-field')}
+                                    name={field.name}
+                                    type='text'
+                                    placeholder={field.placeholder}
+                                    required={field.required}
+                                    defaultValue={field.defaultValue}
+                                  />
+                                );
+                                break;
+
+                              case 'booleancheckbox':
+                                input = (
+                                  <input
+                                    className={clsx(styles.input, styles.checkbox, 'form__text-field')}
+                                    name={field.name}
+                                    type='checkbox'
+                                    placeholder={field.placeholder}
+                                    required={field.required}
+                                    defaultValue={field.defaultValue}
+                                  />
+                                );
+                                break;
+
+                              case 'textarea':
+                                input = (
+                                  <textarea
+                                    className={clsx(styles.input, 'form__text-field')}
+                                    name={field.name}
+                                    placeholder={field.placeholder}
+                                    required={field.required}
+                                    defaultValue={field.defaultValue}
+                                  />
+                                );
+                                break;
+                            }
+                            return (
+                              <label key={index} className={styles.formRow}>
+                                <p className={styles.label}>
+                                  {field.label}
+                                  {field.required && '*'}
+                                </p>
+                                <p className={styles.field}>
+                                  {input}
+                                  {field.description}
+                                </p>
+                              </label>
+                            );
+                          })}
+                        </Fragment>
+                      ))}
+                      <input
+                        className={clsx(styles.submit, 'btn btn--primary btn--xs')}
+                        type='submit'
+                        value={selectedForm.submitText}
+                        onClick={() => setShowSelectedForm(false)}
+                      />
+                    </>
+                  )}
+                  {!showSelectedForm && <p>{selectedForm.inlineMessage}</p>}
+                </div>
+              )}
+              {selectedForm && !showSelectedForm && (
+                <>
+                  <br />
+                  <button
+                    className={clsx(styles.submit, 'btn btn--primary btn--xs')}
+                    onClick={() => setShowSelectedForm(true)}
+                  >
+                    {elementTerms.reset}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

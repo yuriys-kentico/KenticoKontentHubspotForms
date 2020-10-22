@@ -15,10 +15,6 @@ export const App = boundary(() => {
 
   const [, setHubSpotCode] = useLocalStorage<string>(LocalStorageKeys.Code);
 
-  if (error || info) {
-    return <Error stack={`${error && error.stack}${info && info.componentStack}`} />;
-  }
-
   const hubspotCode = new URLSearchParams(global.location.search).get('code');
 
   if (hubspotCode) {
@@ -30,11 +26,13 @@ export const App = boundary(() => {
   }
 
   const invalidUsage = global.self === global.top;
+  const hasError = error || info;
 
   return (
     <Suspense fallback={<Loading />}>
-      {invalidUsage && <InvalidUsage />}
-      {!invalidUsage && <HubSpotForms />}
+      {hasError && <Error stack={`${error && error.stack}${info && info.componentStack}`} />}
+      {!hasError && invalidUsage && <InvalidUsage />}
+      {!hasError && !invalidUsage && <HubSpotForms />}
     </Suspense>
   );
 });
